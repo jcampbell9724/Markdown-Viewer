@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="A clean browser-based Markdown viewer with a collapsible import sidebar and a full formatted reading pane.">
+  <meta name="robots" content="index,follow">
+  <meta name="theme-color" content="#0b1015">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Markdown Viewer">
+  <meta property="og:description" content="Open Markdown files in a browser with a collapsible import sidebar and a formatted document preview.">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Markdown Viewer">
+  <meta name="twitter:description" content="Open Markdown files in a browser with a collapsible import sidebar and a formatted document preview.">
+  <title>Markdown Viewer</title>
+  <link rel="stylesheet" href="styles.css">
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "Markdown Viewer",
+      "applicationCategory": "UtilitiesApplication",
+      "operatingSystem": "Any",
+      "description": "A browser-based Markdown viewer with a collapsible import sidebar and a formatted reading pane.",
+      "browserRequirements": "Requires JavaScript and a modern browser"
+    }
+  </script>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="workspace workspace-input" id="inputWorkspace">
+      <div class="sidebar-rail" aria-label="Import controls">
+        <button class="icon-button sidebar-toggle" id="sidebarToggle" type="button" aria-controls="importPanel" aria-expanded="false" aria-label="Expand import panel">&gt;</button>
+        <button class="icon-button sidebar-open" id="railOpenButton" type="button" aria-label="Open markdown file">+</button>
+        <button class="icon-button sidebar-close" id="closeButton" type="button" aria-label="Close current markdown">x</button>
+      </div>
+
+      <div class="import-panel" id="importPanel">
+        <section class="drop-zone" id="dropZone" tabindex="0" aria-label="Markdown file drop zone">
+          <div class="drop-ornament" aria-hidden="true">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+          <div class="drop-zone-copy">
+            <p class="drop-title" id="importTitle">Drop Markdown</p>
+            <p class="drop-subtitle" id="importHint">.md .markdown .txt</p>
+          </div>
+          <div class="drop-zone-actions">
+            <button class="button button-primary" id="openButton" type="button">Open file</button>
+          </div>
+          <input id="fileInput" type="file" accept=".md,.markdown,.txt,text/markdown,text/plain" hidden>
+        </section>
+      </div>
+    </aside>
+
+    <main class="workspace workspace-preview">
+      <header class="preview-header">
+        <h2 id="previewTitle">No document</h2>
+      </header>
+      <div class="preview-stage">
+        <article class="preview-paper prose" id="preview" aria-live="polite"></article>
+      </div>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
