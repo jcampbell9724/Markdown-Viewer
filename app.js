@@ -59,12 +59,31 @@ function getAlignmentToken(segment) {
   return "";
 }
 
+function isSafeMarkdownUrl(value, isImage = false) {
+  // Browsers can ignore control characters while interpreting URL schemes.
+  if (!value || /[\u0000-\u0020\u007f\\]/.test(value)) {
+    return false;
+  }
+
+  const scheme = value.match(/^([a-z][a-z0-9+.-]*):/i);
+  if (!scheme) {
+    return true;
+  }
+
+  const allowedSchemes = isImage ? ["http", "https"] : ["http", "https", "mailto"];
+  return allowedSchemes.includes(scheme[1].toLowerCase());
+}
+
 function parseInline(markdown) {
   const protectedTokens = [];
-  let html = escapeHtml(markdown);
+  let html = markdown;
+  let tokenPrefix = "@@MDINLINE";
+  while (markdown.includes(tokenPrefix)) {
+    tokenPrefix += "X";
+  }
 
   function protect(fragment) {
-    const token = `@@INLINE${protectedTokens.length}@@`;
+    const token = `${tokenPrefix}${protectedTokens.length}@@`;
     protectedTokens.push(fragment);
     return token;
   }
@@ -74,14 +93,23 @@ function parseInline(markdown) {
   });
 
   html = html.replace(/!\[([^\]]*?)\]\((\S+?)(?:\s+"(.*?)")?\)/g, (_, alt, src, title = "") => {
+    if (!isSafeMarkdownUrl(src, true)) {
+      return protect(escapeHtml(alt));
+    }
     const titleAttribute = title ? ` title="${escapeAttribute(title)}"` : "";
     return protect(`<img src="${escapeAttribute(src)}" alt="${escapeAttribute(alt)}"${titleAttribute}>`);
   });
 
   html = html.replace(/\[([^\]]+?)\]\((\S+?)(?:\s+"(.*?)")?\)/g, (_, text, href, title = "") => {
+    if (!isSafeMarkdownUrl(href)) {
+      return protect(parseInline(text));
+    }
     const titleAttribute = title ? ` title="${escapeAttribute(title)}"` : "";
     return protect(`<a href="${escapeAttribute(href)}"${titleAttribute} target="_blank" rel="noreferrer">${parseInline(text)}</a>`);
   });
+
+  // Escape plain text once, after protecting fragments that escape their own values.
+  html = escapeHtml(html);
 
   html = html.replace(/(^|[^\w])\*\*(.+?)\*\*(?!\*)/g, (_, prefix, text) => `${prefix}<strong>${text}</strong>`);
   html = html.replace(/(^|[^\w])__(.+?)__(?!_)/g, (_, prefix, text) => `${prefix}<strong>${text}</strong>`);
@@ -89,7 +117,14 @@ function parseInline(markdown) {
   html = html.replace(/(^|[^\w])_(.+?)_(?!_)/g, (_, prefix, text) => `${prefix}<em>${text}</em>`);
   html = html.replace(/~~(.+?)~~/g, "<del>$1</del>");
 
-  html = html.replace(/@@INLINE(\d+)@@/g, (_, index) => protectedTokens[Number(index)] || "");
+  const tokenPattern = new RegExp(`${tokenPrefix}(\\d+)@@`, "g");
+  for (let index = 0; index < protectedTokens.length; index += 1) {
+    const restored = html.replace(tokenPattern, (_, tokenIndex) => protectedTokens[Number(tokenIndex)] || "");
+    if (restored === html) {
+      break;
+    }
+    html = restored;
+  }
   return html;
 }
 
@@ -568,3 +603,4 @@ if (typeof module !== "undefined" && module.exports) {
     normalizeMarkdown
   };
 }
+
